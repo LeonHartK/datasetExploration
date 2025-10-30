@@ -197,7 +197,7 @@ Los reportes se guardan en la carpeta `reports/`:
 
 ## Configuración
 
-Editar `utils/config.py` para personalizar:
+Se debe editar `utils/config.py` en caso de personalizar:
 - Rutas de archivos
 - Separadores de CSV
 - Umbral de detección de outliers
