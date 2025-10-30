@@ -1,0 +1,27 @@
+# Dependencias principales
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Análisis estadístico
+scipy>=1.10.0
+
+# Visualización (opcional, para expansión futura)
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Manejo de datos
+openpyxl>=3.1.0  # Para archivos Excel si es necesario
+
+# Utilidades
+python-dateutil>=2.8.0
+
+# Testing (opcional)
+pytest>=7.3.0
+pytest-cov>=4.1.0
+
+# Documentación (opcional)
+sphinx>=6.0.0
+
+# Jupyter notebooks (opcional)
+jupyter>=1.0.0
+ipykernel>=6.22.0
