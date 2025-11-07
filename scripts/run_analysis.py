@@ -4,18 +4,38 @@ Ejecutar desde la raíz del proyecto: python scripts/run_analysis.py
 """
 
 import sys
+import warnings
 from pathlib import Path
 
-# Agregar directorio raíz al path
+# Agregar directorio raíz al path ANTES de los imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+import pandas as pd
 from utils.analyzer import DatasetAnalyzer
 from utils.config import REPORTS_DIR
 from utils.data_transformer import transform_transactions_data
 from utils.statistics import descriptive_statistics_numeric
-import pandas as pd
-import warnings
+from utils.temporal_analysis import (
+    analyze_daily_sales,
+    analyze_weekly_sales,
+    analyze_monthly_sales,
+    analyze_day_of_week_patterns,
+    analyze_hourly_patterns,
+    analyze_trends_and_seasonality,
+)
+from utils.customer_analysis import (
+    analyze_customer_frequency,
+    analyze_time_between_purchases,
+    segment_customers,
+    analyze_customer_behavior_summary,
+)
+from utils.product_analysis import (
+    analyze_top_products,
+    analyze_association_rules,
+    analyze_product_cooccurrence,
+)
+from utils.visualization import generate_all_visualizations
 
 warnings.filterwarnings("ignore")
 
@@ -29,7 +49,7 @@ def main():
     print("=" * 70)
 
     # Inicializar analizador
-    analyzer = DatasetAnalyzer()
+    analyzer: DatasetAnalyzer = DatasetAnalyzer()
 
     try:
         # ============================================================
@@ -147,7 +167,7 @@ def main():
             df_transformed.groupby("tipo_transaccion")
             .agg(
                 {
-                    "id_transaccion": "count",
+                    "persona_id": "count",
                     "num_productos": ["mean", "median", "std", "min", "max"],
                     "tiene_productos": "sum",
                 }
@@ -219,6 +239,117 @@ def main():
         )
 
         # ============================================================
+        # 10. ANÁLISIS TEMPORAL
+        # ============================================================
+        print("\n" + "=" * 70)
+        print("FASE 10: ANÁLISIS TEMPORAL DE VENTAS")
+        print("=" * 70)
+
+        print("\n10.1 Análisis de ventas diarias:")
+        ventas_diarias = analyze_daily_sales(df_transformed)
+        ventas_diarias.to_csv(REPORTS_DIR / "ventas_diarias.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'ventas_diarias.csv'}")
+
+        print("\n10.2 Análisis de ventas semanales:")
+        ventas_semanales = analyze_weekly_sales(df_transformed)
+        ventas_semanales.to_csv(REPORTS_DIR / "ventas_semanales.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'ventas_semanales.csv'}")
+
+        print("\n10.3 Análisis de ventas mensuales:")
+        ventas_mensuales = analyze_monthly_sales(df_transformed)
+        ventas_mensuales.to_csv(REPORTS_DIR / "ventas_mensuales.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'ventas_mensuales.csv'}")
+
+        print("\n10.4 Patrones por día de la semana:")
+        ventas_dia_semana = analyze_day_of_week_patterns(df_transformed)
+        ventas_dia_semana.to_csv(REPORTS_DIR / "ventas_dia_semana.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'ventas_dia_semana.csv'}")
+
+        print("\n10.5 Patrones por hora del día:")
+        ventas_hora = analyze_hourly_patterns(df_transformed)
+        ventas_hora.to_csv(REPORTS_DIR / "ventas_por_hora.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'ventas_por_hora.csv'}")
+
+        print("\n10.6 Análisis de tendencias y estacionalidad:")
+        tendencias = analyze_trends_and_seasonality(df_transformed)
+
+        # ============================================================
+        # 11. ANÁLISIS POR CLIENTE
+        # ============================================================
+        print("\n" + "=" * 70)
+        print("FASE 11: ANÁLISIS DE COMPORTAMIENTO DE CLIENTES")
+        print("=" * 70)
+
+        print("\n11.1 Frecuencia de compra por cliente:")
+        frecuencia_clientes = analyze_customer_frequency(df_transformed)
+        frecuencia_clientes.to_csv(REPORTS_DIR / "frecuencia_clientes.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'frecuencia_clientes.csv'}")
+
+        print("\n11.2 Tiempo entre compras:")
+        tiempo_compras = analyze_time_between_purchases(df_transformed)
+        if len(tiempo_compras) > 0:
+            tiempo_compras.to_csv(
+                REPORTS_DIR / "tiempo_entre_compras.csv", index=False
+            )
+            print(f"\n✓ Guardado en: {REPORTS_DIR / 'tiempo_entre_compras.csv'}")
+
+        print("\n11.3 Segmentación de clientes:")
+        segmentacion = segment_customers(df_transformed, frecuencia_clientes, tiempo_compras)
+        segmentacion.to_csv(REPORTS_DIR / "segmentacion_clientes.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'segmentacion_clientes.csv'}")
+
+        print("\n11.4 Resumen ejecutivo de clientes:")
+        resumen_clientes = analyze_customer_behavior_summary(segmentacion)
+
+        # ============================================================
+        # 12. ANÁLISIS AVANZADO DE PRODUCTOS
+        # ============================================================
+        print("\n" + "=" * 70)
+        print("FASE 12: ANÁLISIS AVANZADO DE PRODUCTOS")
+        print("=" * 70)
+
+        print("\n12.1 Análisis detallado de productos más vendidos:")
+        productos_top = analyze_top_products(df_transformed, top_n=100)
+        productos_top.to_csv(REPORTS_DIR / "productos_top_detallado.csv", index=False)
+        print(f"\n✓ Guardado en: {REPORTS_DIR / 'productos_top_detallado.csv'}")
+
+        print("\n12.2 Co-ocurrencia de productos:")
+        coocurrencia = analyze_product_cooccurrence(df_transformed, top_n=50)
+        if len(coocurrencia) > 0:
+            coocurrencia.to_csv(REPORTS_DIR / "productos_coocurrencia.csv", index=False)
+            print(f"\n✓ Guardado en: {REPORTS_DIR / 'productos_coocurrencia.csv'}")
+
+        print("\n12.3 Reglas de asociación (Market Basket Analysis):")
+        reglas, stats_reglas = analyze_association_rules(
+            df_transformed, min_support=0.01, min_confidence=0.3, top_n=50
+        )
+        if len(reglas) > 0:
+            reglas.to_csv(REPORTS_DIR / "reglas_asociacion.csv", index=False)
+            print(f"\n✓ Guardado en: {REPORTS_DIR / 'reglas_asociacion.csv'}")
+
+        # ============================================================
+        # 13. GENERACIÓN DE VISUALIZACIONES
+        # ============================================================
+        print("\n" + "=" * 70)
+        print("FASE 13: GENERACIÓN DE VISUALIZACIONES")
+        print("=" * 70)
+
+        generate_all_visualizations(
+            ventas_diarias=ventas_diarias,
+            ventas_semanales=ventas_semanales,
+            ventas_mensuales=ventas_mensuales,
+            ventas_dia_semana=ventas_dia_semana,
+            ventas_hora=ventas_hora,
+            frecuencia_clientes=frecuencia_clientes,
+            tiempo_compras=tiempo_compras,
+            segmentacion=segmentacion,
+            productos_top=productos_top,
+            coocurrencia=coocurrencia,
+            reglas=reglas,
+            output_dir=REPORTS_DIR
+        )
+
+        # ============================================================
         # RESUMEN FINAL
         # ============================================================
         print("\n" + "=" * 70)
@@ -235,12 +366,41 @@ def main():
         print(f"  • Transacciones transformadas: {len(df_transformed):,} registros")
 
         print("\nArchivos generados:")
-        print(
-            "  • productos_por_transaccion.csv - Estadísticas de cantidad de productos"
-        )
-        print("  • top_productos.csv - Productos más vendidos")
-        print("  • stats_por_tipo_transaccion.csv - Análisis por tipo")
-        print("  • transacciones_transformadas_sample.csv - Datos transformados")
+        print("\n  ANÁLISIS BÁSICO:")
+        print("    • productos_por_transaccion.csv - Estadísticas de cantidad de productos")
+        print("    • top_productos.csv - Productos más vendidos")
+        print("    • stats_por_tipo_transaccion.csv - Análisis por tipo")
+        print("    • transacciones_transformadas_sample.csv - Datos transformados")
+
+        print("\n  ANÁLISIS TEMPORAL:")
+        print("    • ventas_diarias.csv - Ventas por día")
+        print("    • ventas_semanales.csv - Ventas por semana")
+        print("    • ventas_mensuales.csv - Ventas por mes")
+        print("    • ventas_dia_semana.csv - Patrones por día de la semana")
+        print("    • ventas_por_hora.csv - Patrones por hora del día")
+
+        print("\n  ANÁLISIS DE CLIENTES:")
+        print("    • frecuencia_clientes.csv - Frecuencia de compra por cliente")
+        print("    • tiempo_entre_compras.csv - Tiempo promedio entre compras")
+        print("    • segmentacion_clientes.csv - Segmentación RFM de clientes")
+
+        print("\n  ANÁLISIS DE PRODUCTOS:")
+        print("    • productos_top_detallado.csv - Top productos con estadísticas")
+        print("    • productos_coocurrencia.csv - Productos que se compran juntos")
+        print("    • reglas_asociacion.csv - Reglas de asociación (Market Basket)")
+
+        print("\n  VISUALIZACIONES (en carpeta graficas/):")
+        print("    • grafica_ventas_diarias.png - Evolución temporal de ventas")
+        print("    • grafica_ventas_semanales_mensuales.png - Ventas agregadas")
+        print("    • grafica_ventas_dia_semana.png - Patrones semanales")
+        print("    • grafica_ventas_hora.png - Patrones horarios")
+        print("    • grafica_frecuencia_clientes.png - Distribución de clientes")
+        print("    • grafica_tiempo_entre_compras.png - Análisis de recurrencia")
+        print("    • grafica_segmentacion_clientes.png - Segmentación RFM")
+        print("    • grafica_top_productos.png - Productos más vendidos")
+        print("    • grafica_coocurrencia_productos.png - Co-ocurrencia")
+        print("    • grafica_reglas_asociacion.png - Market Basket Analysis")
+
         print("\n" + "=" * 70)
 
     except Exception as e:

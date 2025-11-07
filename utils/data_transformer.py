@@ -61,7 +61,7 @@ def extract_transaction_features(df: pd.DataFrame) -> pd.DataFrame:
                 {
                     "fecha": fecha,
                     "tipo_transaccion": int(tipo) if not pd.isna(tipo) else None,
-                    "id_transaccion": int(trans_id) if not pd.isna(trans_id) else None,
+                    "persona_id": int(trans_id) if not pd.isna(trans_id) else None,
                     "productos_str": productos_str,
                     "productos_list": productos,
                     "num_productos": num_productos,
@@ -193,7 +193,7 @@ def analyze_products_per_transaction(df_transformed: pd.DataFrame) -> dict:
     if stats["outliers_count"] > 0:
         print(f"\n  Ejemplos de transacciones outliers:")
         print(
-            outliers[["tipo_transaccion", "id_transaccion", "num_productos"]]
+            outliers[["tipo_transaccion", "persona_id", "num_productos"]]
             .head(10)
             .to_string(index=False)
         )
@@ -219,7 +219,7 @@ def analyze_by_transaction_type(df_transformed: pd.DataFrame) -> pd.DataFrame:
         df_transformed.groupby("tipo_transaccion")
         .agg(
             {
-                "id_transaccion": "count",
+                "persona_id": "count",
                 "num_productos": ["mean", "median", "std", "min", "max"],
                 "tiene_productos": "sum",
             }
@@ -232,7 +232,7 @@ def analyze_by_transaction_type(df_transformed: pd.DataFrame) -> pd.DataFrame:
     ]
     stats_by_type = stats_by_type.rename(
         columns={
-            "id_transaccion_count": "total_transacciones",
+            "persona_id_count": "total_transacciones",
             "num_productos_mean": "media_productos",
             "num_productos_median": "mediana_productos",
             "num_productos_std": "std_productos",
