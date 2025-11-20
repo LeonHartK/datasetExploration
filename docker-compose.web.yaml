@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eda-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - ./reports:/app/reports:ro  # Read-only access to reports
+      - ./data:/app/data:ro         # Read-only access to data
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    command: python run.py
+    networks:
+      - eda-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eda-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Evita conflictos con node_modules del host
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+    networks:
+      - eda-network
+    restart: unless-stopped
+
+networks:
+  eda-network:
+    driver: bridge

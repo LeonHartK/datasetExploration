@@ -1,0 +1,13 @@
+# Flask y extensiones
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Procesamiento de datos
+pandas==2.1.4
+numpy==1.26.2
+
+# Servidor WSGI para producción
+gunicorn==21.2.0
+
+# Utilidades
+python-dotenv==1.0.0
