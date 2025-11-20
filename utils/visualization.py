@@ -505,6 +505,195 @@ def plot_association_rules(reglas: pd.DataFrame, output_dir: Path, top_n: int = 
 # FUNCIÓN PRINCIPAL PARA GENERAR TODAS LAS GRÁFICAS
 # ============================================================
 
+def plot_boxplot_analysis(df_transactions, df_customers, graficas_dir):
+    """
+    Genera boxplots para detectar outliers en distribuciones
+
+    Args:
+        df_transactions: DataFrame con datos de transacciones
+        df_customers: DataFrame con frecuencia de clientes
+        graficas_dir: Directorio donde guardar las gráficas
+    """
+    print("Generando boxplots de análisis...")
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    fig.suptitle('Análisis de Distribuciones - Detección de Outliers',
+                 fontsize=16, fontweight='bold', y=0.995)
+
+    # 1. Boxplot de productos por transacción
+    ax1 = axes[0, 0]
+    if 'num_productos' in df_transactions.columns:
+        data_to_plot = df_transactions['num_productos'].dropna()
+        ax1.boxplot(data_to_plot, vert=True, patch_artist=True,
+                   boxprops=dict(facecolor='lightblue', alpha=0.7),
+                   medianprops=dict(color='red', linewidth=2))
+        ax1.set_ylabel('Número de Productos', fontsize=12)
+        ax1.set_title('Productos por Transacción', fontsize=13, fontweight='bold')
+        ax1.grid(True, alpha=0.3, axis='y')
+
+        # Estadísticas
+        q1 = data_to_plot.quantile(0.25)
+        q3 = data_to_plot.quantile(0.75)
+        iqr = q3 - q1
+        outliers = len(data_to_plot[(data_to_plot < q1 - 1.5*iqr) | (data_to_plot > q3 + 1.5*iqr)])
+        ax1.text(0.02, 0.98, f'Outliers: {outliers:,} ({outliers/len(data_to_plot)*100:.1f}%)',
+                transform=ax1.transAxes, va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    # 2. Boxplot de transacciones por cliente
+    ax2 = axes[0, 1]
+    if 'num_transacciones' in df_customers.columns:
+        data_to_plot = df_customers['num_transacciones'].dropna()
+        ax2.boxplot(data_to_plot, vert=True, patch_artist=True,
+                   boxprops=dict(facecolor='lightgreen', alpha=0.7),
+                   medianprops=dict(color='red', linewidth=2))
+        ax2.set_ylabel('Número de Transacciones', fontsize=12)
+        ax2.set_title('Transacciones por Cliente', fontsize=13, fontweight='bold')
+        ax2.grid(True, alpha=0.3, axis='y')
+
+        # Estadísticas
+        q1 = data_to_plot.quantile(0.25)
+        q3 = data_to_plot.quantile(0.75)
+        iqr = q3 - q1
+        outliers = len(data_to_plot[(data_to_plot < q1 - 1.5*iqr) | (data_to_plot > q3 + 1.5*iqr)])
+        ax2.text(0.02, 0.98, f'Outliers: {outliers:,} ({outliers/len(data_to_plot)*100:.1f}%)',
+                transform=ax2.transAxes, va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    # 3. Boxplot de productos totales por cliente
+    ax3 = axes[1, 0]
+    if 'total_productos' in df_customers.columns:
+        data_to_plot = df_customers['total_productos'].dropna()
+        ax3.boxplot(data_to_plot, vert=True, patch_artist=True,
+                   boxprops=dict(facecolor='lightcoral', alpha=0.7),
+                   medianprops=dict(color='red', linewidth=2))
+        ax3.set_ylabel('Total de Productos', fontsize=12)
+        ax3.set_title('Volumen Total por Cliente', fontsize=13, fontweight='bold')
+        ax3.grid(True, alpha=0.3, axis='y')
+
+        # Estadísticas
+        q1 = data_to_plot.quantile(0.25)
+        q3 = data_to_plot.quantile(0.75)
+        iqr = q3 - q1
+        outliers = len(data_to_plot[(data_to_plot < q1 - 1.5*iqr) | (data_to_plot > q3 + 1.5*iqr)])
+        ax3.text(0.02, 0.98, f'Outliers: {outliers:,} ({outliers/len(data_to_plot)*100:.1f}%)',
+                transform=ax3.transAxes, va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    # 4. Boxplot de promedio de productos por transacción por cliente
+    ax4 = axes[1, 1]
+    if 'promedio_productos_por_transaccion' in df_customers.columns:
+        data_to_plot = df_customers['promedio_productos_por_transaccion'].dropna()
+        ax4.boxplot(data_to_plot, vert=True, patch_artist=True,
+                   boxprops=dict(facecolor='lightyellow', alpha=0.7),
+                   medianprops=dict(color='red', linewidth=2))
+        ax4.set_ylabel('Promedio de Productos/Transacción', fontsize=12)
+        ax4.set_title('Promedio de Productos por Transacción', fontsize=13, fontweight='bold')
+        ax4.grid(True, alpha=0.3, axis='y')
+
+        # Estadísticas
+        q1 = data_to_plot.quantile(0.25)
+        q3 = data_to_plot.quantile(0.75)
+        iqr = q3 - q1
+        outliers = len(data_to_plot[(data_to_plot < q1 - 1.5*iqr) | (data_to_plot > q3 + 1.5*iqr)])
+        ax4.text(0.02, 0.98, f'Outliers: {outliers:,} ({outliers/len(data_to_plot)*100:.1f}%)',
+                transform=ax4.transAxes, va='top', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    plt.tight_layout()
+    output_path = graficas_dir / 'grafica_boxplot_outliers.png'
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"  ✓ Boxplot guardado: {output_path.name}")
+
+
+def plot_correlation_heatmap(df_customers, df_time_between, graficas_dir):
+    """
+    Genera heatmap de correlación entre variables numéricas
+
+    Args:
+        df_customers: DataFrame con datos de clientes
+        df_time_between: DataFrame con tiempo entre compras
+        graficas_dir: Directorio donde guardar las gráficas
+    """
+    print("Generando heatmap de correlación...")
+
+    # Seleccionar variables numéricas relevantes
+    customer_vars = ['num_transacciones', 'total_productos', 'promedio_productos_por_transaccion']
+
+    # Crear DataFrame para análisis
+    df_analysis = df_customers[customer_vars].copy()
+
+    # Agregar promedio de días entre compras si está disponible
+    if not df_time_between.empty and 'promedio_dias' in df_time_between.columns:
+        # Agregar como nueva columna
+        avg_days_by_customer = df_time_between.groupby('persona_id')['promedio_dias'].mean()
+        df_analysis = df_analysis.merge(
+            avg_days_by_customer.to_frame('dias_entre_compras'),
+            left_index=True,
+            right_index=True,
+            how='left'
+        )
+
+    # Renombrar columnas para mejor visualización
+    column_names = {
+        'num_transacciones': 'Frecuencia\nCompras',
+        'total_productos': 'Volumen\nTotal',
+        'promedio_productos_por_transaccion': 'Productos/\nTransacción',
+        'dias_entre_compras': 'Días entre\nCompras'
+    }
+    df_analysis = df_analysis.rename(columns=column_names)
+
+    # Calcular matriz de correlación
+    corr_matrix = df_analysis.corr()
+
+    # Crear figura
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    # Generar heatmap
+    im = ax.imshow(corr_matrix, cmap='RdYlGn', aspect='auto', vmin=-1, vmax=1)
+
+    # Configurar ejes
+    ax.set_xticks(np.arange(len(corr_matrix.columns)))
+    ax.set_yticks(np.arange(len(corr_matrix.columns)))
+    ax.set_xticklabels(corr_matrix.columns, fontsize=11)
+    ax.set_yticklabels(corr_matrix.columns, fontsize=11)
+
+    # Rotar etiquetas del eje x
+    plt.setp(ax.get_xticklabels(), rotation=0, ha="center")
+
+    # Agregar valores de correlación en cada celda
+    for i in range(len(corr_matrix.columns)):
+        for j in range(len(corr_matrix.columns)):
+            value = corr_matrix.iloc[i, j]
+            color = 'white' if abs(value) > 0.5 else 'black'
+            text = ax.text(j, i, f'{value:.2f}',
+                          ha="center", va="center", color=color,
+                          fontsize=12, fontweight='bold')
+
+    # Título y colorbar
+    ax.set_title('Matriz de Correlación - Variables de Comportamiento de Clientes',
+                fontsize=14, fontweight='bold', pad=20)
+    cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label('Coeficiente de Correlación', fontsize=12)
+
+    # Agregar interpretación
+    interpretation = (
+        "Interpretación:\n"
+        "• Valores cercanos a +1: Correlación positiva fuerte\n"
+        "• Valores cercanos a 0: Sin correlación\n"
+        "• Valores cercanos a -1: Correlación negativa fuerte"
+    )
+    plt.figtext(0.5, -0.05, interpretation, ha='center', fontsize=10,
+               bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
+
+    plt.tight_layout()
+    output_path = graficas_dir / 'grafica_correlacion_heatmap.png'
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"  ✓ Heatmap guardado: {output_path.name}")
+
+
 def generate_all_visualizations(
     ventas_diarias: pd.DataFrame,
     ventas_semanales: pd.DataFrame,
@@ -517,7 +706,8 @@ def generate_all_visualizations(
     productos_top: pd.DataFrame,
     coocurrencia: pd.DataFrame,
     reglas: pd.DataFrame,
-    output_dir: Path
+    output_dir: Path,
+    df_transactions: Optional[pd.DataFrame] = None
 ):
     """
     Genera todas las visualizaciones del análisis
@@ -525,6 +715,7 @@ def generate_all_visualizations(
     Args:
         Varios DataFrames con los resultados de análisis
         output_dir: Directorio de salida para las gráficas
+        df_transactions: DataFrame con transacciones transformadas (opcional, para boxplot)
     """
     print("\n" + "=" * 70)
     print("GENERANDO VISUALIZACIONES")
@@ -554,6 +745,15 @@ def generate_all_visualizations(
         plot_product_cooccurrence(coocurrencia, graficas_dir, top_n=20)
     if len(reglas) > 0:
         plot_association_rules(reglas, graficas_dir, top_n=20)
+
+    print("\nGenerando visualizaciones analíticas avanzadas...")
+    # Boxplot de outliers
+    if df_transactions is not None and not frecuencia_clientes.empty:
+        plot_boxplot_analysis(df_transactions, frecuencia_clientes, graficas_dir)
+
+    # Heatmap de correlación
+    if not frecuencia_clientes.empty:
+        plot_correlation_heatmap(frecuencia_clientes, tiempo_compras, graficas_dir)
 
     print(f"\n✓ Todas las gráficas generadas en: {graficas_dir}")
     print(f"  Total de gráficas generadas: {len(list(graficas_dir.glob('*.png')))}")

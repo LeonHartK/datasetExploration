@@ -313,6 +313,11 @@ def visualization_task():
     if ventas_diarias.empty or productos_top.empty:
         return
 
+    # Cargar transacciones transformadas para visualizaciones analíticas
+    df_transactions = None
+    if TRANSFORMED_TRANSACTIONS_PATH.exists():
+        df_transactions = pd.read_parquet(TRANSFORMED_TRANSACTIONS_PATH)
+
     generate_all_visualizations(
         ventas_diarias,
         ventas_semanales,
@@ -326,6 +331,7 @@ def visualization_task():
         coocurrencia,
         reglas,
         output_dir=REPORTS_DIR,
+        df_transactions=df_transactions,
     )
 
 
