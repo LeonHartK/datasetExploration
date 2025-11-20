@@ -63,3 +63,5 @@ Thumbs.db
 .DS_Store
 
 .env
+airflow-webserver.pid
+*.pid
