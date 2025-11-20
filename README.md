@@ -270,7 +270,7 @@ Esta tarea analiza **1,108,983 transacciones** de productos organizados en **50 
 
 ```bash
 proyecto/
-├── data/                           # Datasets originales
+├── data/
 │   └── DataSet/
 │       ├── Products/
 │       │   ├── Categories.csv
@@ -279,26 +279,8 @@ proyecto/
 │           ├── 2013-01-01.csv
 │           ├── 2013-01-02.csv
 │           └── ... (181 archivos)
-│
-├── dags/                           # ✨ DAGs de Airflow (nueva ubicación)
-│   └── eda_pipeline.py            # Pipeline modular de análisis
-│
-├── infrastructure/                 # ✨ Configuración de infraestructura
-│   └── airflow/
-│       ├── config/                # Configuración de Airflow
-│       └── requirements/          # Dependencias de Airflow
-│
-├── airflow-project/               # Archivos generados por Airflow
-│   ├── logs/                      # Logs de ejecución
-│   └── plugins/                   # Plugins de Airflow
-│
-├── reports/                       # Reportes y análisis generados
-│   ├── cache/                     # ✨ Cache en Parquet (optimización)
-│   │   ├── categories.parquet
-│   │   ├── product_category.parquet
-│   │   ├── transactions.parquet
-│   │   └── transactions_transformed.parquet
-│   ├── graficas/
+├── reports/
+│   ├── graficas/                    
 │   │   ├── grafica_ventas_diarias.png
 │   │   ├── grafica_ventas_semanales_mensuales.png
 │   │   ├── grafica_ventas_dia_semana.png
@@ -312,23 +294,21 @@ proyecto/
 │   ├── productos_por_transaccion.csv
 │   ├── top_productos.csv
 │   ├── stats_por_tipo_transaccion.csv
-│   ├── ventas_diarias.csv
-│   ├── ventas_semanales.csv
-│   ├── ventas_mensuales.csv
-│   ├── ventas_dia_semana.csv
-│   ├── ventas_por_hora.csv
-│   ├── frecuencia_clientes.csv
-│   ├── tiempo_entre_compras.csv
-│   ├── segmentacion_clientes.csv
-│   ├── productos_top_detallado.csv
-│   ├── productos_coocurrencia.csv
-│   ├── reglas_asociacion.csv
+│   ├── ventas_diarias.csv          
+│   ├── ventas_semanales.csv        
+│   ├── ventas_mensuales.csv        
+│   ├── ventas_dia_semana.csv       
+│   ├── ventas_por_hora.csv         
+│   ├── frecuencia_clientes.csv     
+│   ├── tiempo_entre_compras.csv    
+│   ├── segmentacion_clientes.csv   
+│   ├── productos_top_detallado.csv 
+│   ├── productos_coocurrencia.csv  
+│   ├── reglas_asociacion.csv       
 │   └── transacciones_transformadas_sample.csv
-│
-├── scripts/                       # Scripts de ejecución manual
-│   └── run_analysis.py           # Script original monolítico
-│
-├── utils/                         # Módulos de lógica de negocio
+├── scripts/
+│   └── run_analysis.py
+├── utils/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── data_loader.py
@@ -336,88 +316,13 @@ proyecto/
 │   ├── data_transformer.py
 │   ├── statistics.py
 │   ├── analyzer.py
-│   ├── temporal_analysis.py
-│   ├── customer_analysis.py
-│   ├── product_analysis.py
-│   └── visualization.py
-│
-├── docker-compose.yaml            # ✨ Configuración Docker (nueva ubicación)
-├── .env                           # Variables de entorno
-├── requirements.txt               # Dependencias del proyecto
+│   ├── temporal_analysis.py        
+│   ├── customer_analysis.py        
+│   ├── product_analysis.py         
+│   └── visualization.py            
+├── requirements.txt
 └── README.md
 ```
-
-### Arquitectura Híbrida: Script + Airflow
-
-Este proyecto soporta **dos modos de ejecución**:
-
-#### 1. **Ejecución Manual** (Script Original)
-```bash
-python scripts/run_analysis.py
-```
-- Ejecuta todo el análisis en un solo proceso secuencial
-- Ideal para desarrollo, pruebas o análisis ad-hoc
-- No requiere Docker ni Airflow
-
-#### 2. **Ejecución Orquestada** (Airflow)
-```bash
-docker-compose up
-```
-- Ejecuta el análisis como un pipeline distribuido modular
-- Paraleliza tareas independientes para mayor eficiencia
-- Programación automática (daily a las 2 AM)
-- Monitoreo y logs avanzados en UI web (http://localhost:8080)
-- Persistencia intermedia con cache en Parquet
-- Ideal para producción y ejecuciones recurrentes
-
-### Ventajas de la Arquitectura Airflow
-
-| Característica | Script Manual | Airflow DAG |
-|---------------|---------------|-------------|
-| **Ejecución** | Manual | Programada/Manual |
-| **Paralelización** | No | Sí (automática) |
-| **Persistencia** | Solo final | Cada paso (Parquet) |
-| **Recuperación** | Reiniciar todo | Solo tareas fallidas |
-| **Monitoreo** | Logs en consola | UI web completa |
-| **Escalabilidad** | 1 servidor | Múltiples workers |
-| **Reintentos** | Manual | Automáticos |
-
-### DAG de Airflow: Fases del Pipeline
-
-El DAG en `dags/eda_pipeline.py` organiza el análisis en grupos de tareas:
-
-```
-start (crear directorios)
-  ↓
-load_data (paralelo: categorías, productos, transacciones)
-  ↓
-transform_data (transformar → estadísticas)
-  ↓
-  ├→ review_data (paralelo)
-  └→ product_basic_analysis (paralelo)
-       ↓
-     temporal_analysis (serie)
-       ↓
-     customer_analysis (con dependencias)
-       ↓
-     product_advanced_analysis (paralelo)
-       ↓
-     export_global_summary
-       ↓
-     generate_visualizations
-       ↓
-     end
-```
-
-**TaskGroups del DAG:**
-1. `load_data` - Carga paralela de categorías, productos y transacciones
-2. `transform_data` - Transformación de datos y estadísticas
-3. `review_data` - Revisión de calidad de datos
-4. `product_basic_analysis` - Análisis básico de productos
-5. `temporal_analysis` - Análisis de series temporales
-6. `customer_analysis` - Segmentación RFM y comportamiento
-7. `product_advanced_analysis` - Co-ocurrencia y asociaciones
-8. Exportación y visualización final
 
 ## Instalación
 

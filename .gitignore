@@ -62,6 +62,18 @@ htmlcov/
 Thumbs.db
 .DS_Store
 
-.env
+# Airflow
 airflow-webserver.pid
+airflow-scheduler.pid
 *.pid
+logs/
+config/
+plugins/
+airflow.db
+airflow.cfg
+webserver_config.py
+unittests.cfg
+.env
+
+# Docker volumes y archivos generados
+docker-compose.override.yml
