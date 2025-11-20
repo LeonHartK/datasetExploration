@@ -83,10 +83,10 @@
           iconColor="linear-gradient(135deg, #30cfd0 0%, #330867 100%)"
         />
         <KPICard
-          title="Hora Pico"
-          :value="summary.temporal_metrics?.peak_hour"
-          icon="⏰"
-          format="none"
+          title="Días de Análisis"
+          :value="summary.temporal_metrics?.analysis_days"
+          icon="📆"
+          format="number"
           iconColor="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
         />
       </div>

@@ -59,23 +59,23 @@ const error = ref(null)
 const data = ref({})
 
 const topProductsColumns = [
-  { key: 'Product', label: 'Producto' },
-  { key: 'Cantidad', label: 'Cantidad Vendida', format: 'number' },
-  { key: 'Porcentaje', label: 'Porcentaje', format: 'percent' }
+  { key: 'producto_id', label: 'Producto ID' },
+  { key: 'frecuencia', label: 'Cantidad Vendida', format: 'number' },
+  { key: 'porcentaje', label: 'Porcentaje %', format: 'decimal' }
 ]
 
 const rulesColumns = [
-  { key: 'antecedents', label: 'Antecedentes' },
-  { key: 'consequents', label: 'Consecuentes' },
-  { key: 'support', label: 'Soporte', format: 'decimal' },
-  { key: 'confidence', label: 'Confianza', format: 'decimal' },
+  { key: 'antecedente', label: 'Antecedente' },
+  { key: 'consecuente', label: 'Consecuente' },
+  { key: 'soporte', label: 'Soporte', format: 'decimal' },
+  { key: 'confianza', label: 'Confianza', format: 'decimal' },
   { key: 'lift', label: 'Lift', format: 'decimal' }
 ]
 
 const categoryColumns = [
-  { key: 'Category', label: 'Categoría' },
-  { key: 'Productos', label: 'Productos', format: 'number' },
-  { key: 'Transacciones', label: 'Transacciones', format: 'number' }
+  { key: 'categoria_id', label: 'ID' },
+  { key: 'categoria_nombre', label: 'Categoría' },
+  { key: 'total_productos', label: 'Total Productos', format: 'number' }
 ]
 
 onMounted(async () => {

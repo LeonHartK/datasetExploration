@@ -57,23 +57,23 @@ const error = ref(null)
 const data = ref({})
 
 const dailyColumns = [
-  { key: 'Fecha', label: 'Fecha' },
-  { key: 'Transacciones', label: 'Transacciones', format: 'number' },
-  { key: 'Productos_Vendidos', label: 'Productos Vendidos', format: 'number' }
+  { key: 'fecha', label: 'Fecha' },
+  { key: 'total_transacciones', label: 'Transacciones', format: 'number' },
+  { key: 'total_productos', label: 'Productos Vendidos', format: 'number' }
 ]
 
 const monthlyColumns = [
-  { key: 'Mes', label: 'Mes' },
-  { key: 'Transacciones', label: 'Transacciones', format: 'number' },
-  { key: 'Productos_Vendidos', label: 'Productos Vendidos', format: 'number' }
+  { key: 'mes', label: 'Mes' },
+  { key: 'total_transacciones', label: 'Transacciones', format: 'number' },
+  { key: 'total_productos', label: 'Productos Vendidos', format: 'number' }
 ]
 
 // Chart Data Computed Properties
 const dailyChartData = computed(() => {
   if (!data.value.ventas_diarias) return null
 
-  const labels = data.value.ventas_diarias.map(d => d.Fecha)
-  const transactions = data.value.ventas_diarias.map(d => d.Transacciones || 0)
+  const labels = data.value.ventas_diarias.map(d => d.fecha)
+  const transactions = data.value.ventas_diarias.map(d => d.total_transacciones || 0)
 
   return {
     labels,
@@ -91,8 +91,8 @@ const dailyChartData = computed(() => {
 const weeklyChartData = computed(() => {
   if (!data.value.ventas_semanales) return null
 
-  const labels = data.value.ventas_semanales.map(d => `Semana ${d.Semana || d.Week}`)
-  const transactions = data.value.ventas_semanales.map(d => d.Transacciones || 0)
+  const labels = data.value.ventas_semanales.map(d => `Semana ${d.semana}`)
+  const transactions = data.value.ventas_semanales.map(d => d.total_transacciones || 0)
 
   return {
     labels,
@@ -107,8 +107,8 @@ const weeklyChartData = computed(() => {
 const monthlyChartData = computed(() => {
   if (!data.value.ventas_mensuales) return null
 
-  const labels = data.value.ventas_mensuales.map(d => d.Mes || d.Month)
-  const transactions = data.value.ventas_mensuales.map(d => d.Transacciones || 0)
+  const labels = data.value.ventas_mensuales.map(d => d.mes)
+  const transactions = data.value.ventas_mensuales.map(d => d.total_transacciones || 0)
 
   return {
     labels,
@@ -123,8 +123,8 @@ const monthlyChartData = computed(() => {
 const dayOfWeekChartData = computed(() => {
   if (!data.value.ventas_dia_semana) return null
 
-  const labels = data.value.ventas_dia_semana.map(d => d.DiaSemana || d.Day)
-  const transactions = data.value.ventas_dia_semana.map(d => d.Transacciones || 0)
+  const labels = data.value.ventas_dia_semana.map(d => d.dia_semana)
+  const transactions = data.value.ventas_dia_semana.map(d => d.total_transacciones || 0)
 
   return {
     labels,
