@@ -9,6 +9,7 @@
       <router-link to="/temporal" class="nav-item" active-class="active">Análisis Temporal</router-link>
       <router-link to="/customers" class="nav-item" active-class="active">Clientes</router-link>
       <router-link to="/products" class="nav-item" active-class="active">Productos</router-link>
+      <router-link to="/recommendations" class="nav-item" active-class="active">Recomendaciones</router-link>
     </div>
   </nav>
 </template>

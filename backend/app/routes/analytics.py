@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, current_app
+import pandas as pd
 from app.services.data_loader import DataLoaderService
 from app.services.stats_service import StatsService
 
@@ -6,10 +7,22 @@ bp = Blueprint('analytics', __name__, url_prefix='/api/analytics')
 
 @bp.route('/summary', methods=['GET'])
 def get_summary():
-    """Obtiene el resumen ejecutivo con KPIs principales"""
+    """Obtiene el resumen ejecutivo con KPIs principales y datos para gráficas"""
     try:
         stats_service = StatsService()
+        loader = DataLoaderService()
+
+        # KPIs principales
         summary = stats_service.get_executive_summary()
+
+        # Datos para gráficas dinámicas del dashboard
+        summary['chart_data'] = {
+            # Ventas diarias (últimos 30 días para el dashboard)
+            "ventas_diarias": loader.load_csv('ventas_diarias.csv', limit=30),
+            # Top 20 productos para gráfica horizontal
+            "top_productos": loader.load_csv('top_productos.csv', limit=20)
+        }
+
         return jsonify(summary), 200
     except Exception as e:
         current_app.logger.error(f"Error en /summary: {str(e)}")
@@ -115,4 +128,15 @@ def get_transaction_stats():
         return jsonify(data), 200
     except Exception as e:
         current_app.logger.error(f"Error en /transactions: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/top-customers', methods=['GET'])
+def get_top_customers():
+    """Obtiene el top 10 de clientes más activos"""
+    try:
+        loader = DataLoaderService()
+        top_clientes = loader.load_csv('top_clientes.csv')
+        return jsonify(top_clientes), 200
+    except Exception as e:
+        current_app.logger.error(f"Error en /top-customers: {str(e)}")
         return jsonify({"error": str(e)}), 500

@@ -248,57 +248,105 @@ def plot_customer_frequency(frecuencia_clientes: pd.DataFrame, output_dir: Path)
 
 def plot_customer_segmentation(segmentacion: pd.DataFrame, output_dir: Path):
     """
-    Gráficas de segmentación de clientes
+    Gráficas de segmentación de clientes (genera 4 imágenes separadas)
 
     Args:
         segmentacion: DataFrame con segmentación RFM
         output_dir: Directorio de salida
     """
-    print("\n  Generando gráfica: segmentación de clientes...")
+    print("\n  Generando gráficas de segmentación de clientes (4 gráficas separadas)...")
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-
-    # Gráfica 1: Distribución de segmentos
     segmentos_count = segmentacion['segmento'].value_counts()
     colors_segmentos = plt.cm.Set3(range(len(segmentos_count)))
-    ax1.pie(segmentos_count.values, labels=segmentos_count.index, autopct='%1.1f%%',
-            startangle=90, colors=colors_segmentos)
-    ax1.set_title('Distribución de Segmentos de Clientes', fontsize=14, fontweight='bold')
 
-    # Gráfica 2: Segmentos por número de clientes
-    ax2.barh(segmentos_count.index, segmentos_count.values, color=colors_segmentos, alpha=0.7)
-    ax2.set_title('Clientes por Segmento', fontsize=14, fontweight='bold')
-    ax2.set_xlabel('Número de Clientes')
-    ax2.grid(True, alpha=0.3, axis='x')
+    # Gráfica 1: Distribución de segmentos (Pie)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.pie(segmentos_count.values, labels=segmentos_count.index, autopct='%1.1f%%',
+            startangle=90, colors=colors_segmentos, textprops={'fontsize': 12})
+    ax.set_title('Distribución de Segmentos de Clientes', fontsize=16, fontweight='bold')
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_segmentacion_distribucion.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Gráfica 2: Segmentos por número de clientes (Barras)
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.barh(segmentos_count.index, segmentos_count.values, color=colors_segmentos, alpha=0.7)
+    ax.set_title('Número de Clientes por Segmento', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Número de Clientes', fontsize=13)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.grid(True, alpha=0.3, axis='x')
 
     # Añadir valores en las barras
     for i, v in enumerate(segmentos_count.values):
-        ax2.text(v, i, f' {v:,}', va='center', fontsize=9)
-
-    # Gráfica 3: Scatter RFM (Recency vs Frequency)
-    scatter = ax3.scatter(segmentacion['recency_score'],
-                         segmentacion['frequency_score'],
-                         c=segmentacion['monetary_score'],
-                         cmap='viridis', s=30, alpha=0.6)
-    ax3.set_title('Matriz RFM: Recency vs Frequency (color=Monetary)',
-                  fontsize=14, fontweight='bold')
-    ax3.set_xlabel('Recency Score')
-    ax3.set_ylabel('Frequency Score')
-    plt.colorbar(scatter, ax=ax3, label='Monetary Score')
-    ax3.grid(True, alpha=0.3)
-
-    # Gráfica 4: Box plot de RFM score por segmento
-    segmentos_para_box = segmentacion.groupby('segmento')['rfm_score'].apply(list)
-    ax4.boxplot([segmentos_para_box[seg] for seg in segmentos_count.index],
-                labels=segmentos_count.index, patch_artist=True)
-    ax4.set_title('Distribución de RFM Score por Segmento', fontsize=14, fontweight='bold')
-    ax4.set_ylabel('RFM Score')
-    ax4.tick_params(axis='x', rotation=45)
-    ax4.grid(True, alpha=0.3, axis='y')
+        ax.text(v, i, f' {v:,}', va='center', fontsize=11)
 
     plt.tight_layout()
-    plt.savefig(output_dir / 'grafica_segmentacion_clientes.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / 'grafica_segmentacion_barras.png', dpi=300, bbox_inches='tight')
     plt.close()
+
+    # Gráfica 3: Matriz RFM con burbujas
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    # Agrupar por combinación de scores
+    rfm_grouped = segmentacion.groupby(['recency_score', 'frequency_score']).agg({
+        'monetary_score': 'mean',
+        'persona_id': 'count'
+    }).reset_index()
+    rfm_grouped.columns = ['recency_score', 'frequency_score', 'monetary_avg', 'num_clientes']
+
+    # Tamaño de burbuja proporcional al número de clientes
+    sizes = (rfm_grouped['num_clientes'] / rfm_grouped['num_clientes'].max()) * 2000
+
+    scatter = ax.scatter(rfm_grouped['recency_score'],
+                         rfm_grouped['frequency_score'],
+                         c=rfm_grouped['monetary_avg'],
+                         s=sizes,
+                         cmap='viridis',
+                         alpha=0.7,
+                         edgecolors='black',
+                         linewidth=2)
+
+    ax.set_title('Matriz RFM: Recency vs Frequency\n(Tamaño=Clientes, Color=Monetary Promedio)',
+                  fontsize=16, fontweight='bold')
+    ax.set_xlabel('Recency Score', fontsize=13)
+    ax.set_ylabel('Frequency Score', fontsize=13)
+    ax.set_xticks([1, 2, 3, 4])
+    ax.set_yticks([1, 2, 3, 4])
+    ax.tick_params(axis='both', labelsize=11)
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Monetary Score Promedio', fontsize=12)
+    cbar.ax.tick_params(labelsize=10)
+    ax.grid(True, alpha=0.3)
+
+    # Añadir etiquetas con número de clientes
+    for _, row in rfm_grouped.iterrows():
+        ax.annotate(f"{row['num_clientes']:,}",
+                    (row['recency_score'], row['frequency_score']),
+                    ha='center', va='center',
+                    fontsize=11, fontweight='bold',
+                    color='white' if row['monetary_avg'] > 2.5 else 'black')
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_segmentacion_matriz_rfm.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Gráfica 4: Box plot de RFM score por segmento
+    fig, ax = plt.subplots(figsize=(12, 8))
+    segmentos_para_box = segmentacion.groupby('segmento')['rfm_score'].apply(list)
+    ax.boxplot([segmentos_para_box[seg] for seg in segmentos_count.index],
+                labels=segmentos_count.index, patch_artist=True)
+    ax.set_title('Distribución de RFM Score por Segmento', fontsize=16, fontweight='bold')
+    ax.set_ylabel('RFM Score', fontsize=13)
+    ax.tick_params(axis='x', rotation=45, labelsize=11)
+    ax.tick_params(axis='y', labelsize=11)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_segmentacion_boxplot.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"    ✓ 4 gráficas de segmentación generadas")
 
 
 def plot_time_between_purchases(tiempo_compras: pd.DataFrame, output_dir: Path):
@@ -438,7 +486,7 @@ def plot_product_cooccurrence(coocurrencia: pd.DataFrame, output_dir: Path, top_
 
 def plot_association_rules(reglas: pd.DataFrame, output_dir: Path, top_n: int = 20):
     """
-    Gráficas de reglas de asociación
+    Gráficas de reglas de asociación (genera 4 imágenes separadas)
 
     Args:
         reglas: DataFrame con reglas de asociación
@@ -449,56 +497,78 @@ def plot_association_rules(reglas: pd.DataFrame, output_dir: Path, top_n: int = 
         print("\n  Saltando gráfica de reglas de asociación: no hay datos")
         return
 
-    print(f"\n  Generando gráfica: reglas de asociación (top {top_n})...")
-
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+    print(f"\n  Generando gráficas de reglas de asociación (4 gráficas separadas)...")
 
     top_rules = reglas.head(top_n)
 
     # Gráfica 1: Top reglas por Lift
+    fig, ax = plt.subplots(figsize=(14, 10))
     labels = [f"{ant} → {cons}" for ant, cons in zip(top_rules['antecedente'], top_rules['consecuente'])]
     colors = plt.cm.RdYlGn(np.linspace(0.3, 0.9, len(top_rules)))
 
-    ax1.barh(range(len(top_rules)), top_rules['lift'], color=colors, alpha=0.8)
-    ax1.set_yticks(range(len(top_rules)))
-    ax1.set_yticklabels(labels, fontsize=8)
-    ax1.set_title(f'Top {top_n} Reglas por Lift', fontsize=14, fontweight='bold')
-    ax1.set_xlabel('Lift')
-    ax1.invert_yaxis()
-    ax1.grid(True, alpha=0.3, axis='x')
-
-    # Gráfica 2: Scatter Soporte vs Confianza (color = Lift)
-    scatter = ax2.scatter(reglas['soporte'], reglas['confianza'],
-                         c=reglas['lift'], cmap='viridis', s=100, alpha=0.6)
-    ax2.set_title('Reglas: Soporte vs Confianza (color=Lift)', fontsize=14, fontweight='bold')
-    ax2.set_xlabel('Soporte')
-    ax2.set_ylabel('Confianza')
-    ax2.grid(True, alpha=0.3)
-    plt.colorbar(scatter, ax=ax2, label='Lift')
-
-    # Gráfica 3: Histograma de Lift
-    ax3.hist(reglas['lift'], bins=30, color='#06A77D', alpha=0.7, edgecolor='black')
-    ax3.set_title('Distribución de Lift en las Reglas', fontsize=14, fontweight='bold')
-    ax3.set_xlabel('Lift')
-    ax3.set_ylabel('Frecuencia')
-    ax3.axvline(reglas['lift'].median(), color='red', linestyle='--',
-                linewidth=2, label=f'Mediana: {reglas["lift"].median():.2f}')
-    ax3.legend()
-    ax3.grid(True, alpha=0.3)
-
-    # Gráfica 4: Histograma de Confianza
-    ax4.hist(reglas['confianza'], bins=30, color='#F18F01', alpha=0.7, edgecolor='black')
-    ax4.set_title('Distribución de Confianza en las Reglas', fontsize=14, fontweight='bold')
-    ax4.set_xlabel('Confianza')
-    ax4.set_ylabel('Frecuencia')
-    ax4.axvline(reglas['confianza'].median(), color='red', linestyle='--',
-                linewidth=2, label=f'Mediana: {reglas["confianza"].median():.4f}')
-    ax4.legend()
-    ax4.grid(True, alpha=0.3)
+    ax.barh(range(len(top_rules)), top_rules['lift'], color=colors, alpha=0.8)
+    ax.set_yticks(range(len(top_rules)))
+    ax.set_yticklabels(labels, fontsize=11)
+    ax.set_title(f'Top {top_n} Reglas de Asociación por Lift', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Lift', fontsize=13)
+    ax.tick_params(axis='x', labelsize=11)
+    ax.invert_yaxis()
+    ax.grid(True, alpha=0.3, axis='x')
 
     plt.tight_layout()
-    plt.savefig(output_dir / 'grafica_reglas_asociacion.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / 'grafica_reglas_asociacion_lift.png', dpi=300, bbox_inches='tight')
     plt.close()
+
+    # Gráfica 2: Scatter Soporte vs Confianza
+    fig, ax = plt.subplots(figsize=(12, 8))
+    scatter = ax.scatter(reglas['soporte'], reglas['confianza'],
+                         c=reglas['lift'], cmap='viridis', s=120, alpha=0.6)
+    ax.set_title('Reglas: Soporte vs Confianza (color=Lift)', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Soporte', fontsize=13)
+    ax.set_ylabel('Confianza', fontsize=13)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.grid(True, alpha=0.3)
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Lift', fontsize=12)
+    cbar.ax.tick_params(labelsize=10)
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_reglas_asociacion_scatter.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Gráfica 3: Histograma de Lift
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.hist(reglas['lift'], bins=30, color='#06A77D', alpha=0.7, edgecolor='black')
+    ax.set_title('Distribución de Lift en las Reglas', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Lift', fontsize=13)
+    ax.set_ylabel('Frecuencia', fontsize=13)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.axvline(reglas['lift'].median(), color='red', linestyle='--',
+                linewidth=2.5, label=f'Mediana: {reglas["lift"].median():.2f}')
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_reglas_asociacion_dist_lift.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Gráfica 4: Histograma de Confianza
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.hist(reglas['confianza'], bins=30, color='#F18F01', alpha=0.7, edgecolor='black')
+    ax.set_title('Distribución de Confianza en las Reglas', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Confianza', fontsize=13)
+    ax.set_ylabel('Frecuencia', fontsize=13)
+    ax.tick_params(axis='both', labelsize=11)
+    ax.axvline(reglas['confianza'].median(), color='red', linestyle='--',
+                linewidth=2.5, label=f'Mediana: {reglas["confianza"].median():.4f}')
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_dir / 'grafica_reglas_asociacion_dist_confianza.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"    ✓ 4 gráficas de reglas de asociación generadas")
 
 
 # ============================================================

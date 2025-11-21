@@ -71,6 +71,7 @@ COOCURRENCIA_PATH = REPORTS_DIR / "productos_coocurrencia.csv"
 ASOCIACION_PATH = REPORTS_DIR / "reglas_asociacion.csv"
 
 FRECUENCIA_CLIENTES_PATH = REPORTS_DIR / "frecuencia_clientes.csv"
+TOP_CLIENTES_PATH = REPORTS_DIR / "top_clientes.csv"
 TIEMPO_ENTRE_COMPRAS_PATH = REPORTS_DIR / "tiempo_entre_compras.csv"
 SEGMENTACION_CLIENTES_PATH = REPORTS_DIR / "segmentacion_clientes.csv"
 CUSTOMER_SUMMARY_PATH = REPORTS_DIR / "customer_behavior_summary.csv"
@@ -217,6 +218,14 @@ def customer_frequency_task():
     df = pd.read_parquet(TRANSFORMED_TRANSACTIONS_PATH)
     freq = analyze_customer_frequency(df)
     freq.to_csv(FRECUENCIA_CLIENTES_PATH, index=False)
+
+    # Exportar top 10 clientes
+    top_clientes = freq.nlargest(10, 'num_transacciones')[
+        ['persona_id', 'num_transacciones', 'total_productos', 'promedio_productos_por_transaccion']
+    ].copy()
+    top_clientes['ranking'] = range(1, len(top_clientes) + 1)
+    top_clientes = top_clientes[['ranking', 'persona_id', 'num_transacciones', 'total_productos', 'promedio_productos_por_transaccion']]
+    top_clientes.to_csv(TOP_CLIENTES_PATH, index=False)
 
 
 def time_between_purchases_task():

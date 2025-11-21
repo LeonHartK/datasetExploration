@@ -36,6 +36,19 @@ export default {
     return apiClient.get('/analytics/transactions')
   },
 
+  getTopCustomers() {
+    return apiClient.get('/analytics/top-customers')
+  },
+
+  // Recommendations endpoints
+  getRecommendationsForCustomer(customerId, topN = 10) {
+    return apiClient.get(`/recommendations/customer/${customerId}?top_n=${topN}`)
+  },
+
+  getRecommendationsForProduct(productId, topN = 10) {
+    return apiClient.get(`/recommendations/product/${productId}?top_n=${topN}`)
+  },
+
   // Reports endpoints
   getImages() {
     return apiClient.get('/reports/images')

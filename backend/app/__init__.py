@@ -12,10 +12,11 @@ def create_app():
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://localhost:3000"]}})
 
     # Registrar blueprints (rutas)
-    from app.routes import analytics, reports, health
+    from app.routes import analytics, reports, health, recommendations
     app.register_blueprint(analytics.bp)
     app.register_blueprint(reports.bp)
     app.register_blueprint(health.bp)
+    app.register_blueprint(recommendations.bp)
 
     @app.route('/')
     def index():
@@ -25,7 +26,8 @@ def create_app():
             "endpoints": {
                 "health": "/api/health",
                 "analytics": "/api/analytics",
-                "reports": "/api/reports"
+                "reports": "/api/reports",
+                "recommendations": "/api/recommendations"
             }
         }
 

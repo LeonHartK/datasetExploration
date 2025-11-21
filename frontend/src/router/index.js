@@ -3,6 +3,7 @@ import Dashboard from '../views/Dashboard.vue'
 import TemporalAnalysis from '../views/TemporalAnalysis.vue'
 import CustomerAnalysis from '../views/CustomerAnalysis.vue'
 import ProductAnalysis from '../views/ProductAnalysis.vue'
+import Recommendations from '../views/Recommendations.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/products',
     name: 'ProductAnalysis',
     component: ProductAnalysis
+  },
+  {
+    path: '/recommendations',
+    name: 'Recommendations',
+    component: Recommendations
   }
 ]
 

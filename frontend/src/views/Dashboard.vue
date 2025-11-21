@@ -91,15 +91,45 @@
         />
       </div>
 
-      <!-- Images Grid -->
+      <!-- Dynamic Charts -->
       <h3 class="section-title">Visualizaciones Principales</h3>
+
+      <!-- Ventas Diarias - Dynamic Chart -->
+      <ChartContainer title="Tendencia de Ventas Diarias (Últimos 30 días)">
+        <LineChart v-if="dailySalesChartData" :data="dailySalesChartData" />
+      </ChartContainer>
+
+      <!-- Top Productos - Dynamic Chart -->
+      <ChartContainer title="Top 20 Productos Más Vendidos">
+        <BarChart v-if="topProductsChartData" :data="topProductsChartData" :horizontal="true" />
+      </ChartContainer>
+
+      <!-- Top Clientes - Dynamic Chart -->
+      <ChartContainer title="Top 10 Clientes Más Activos">
+        <BarChart v-if="topCustomersChartData" :data="topCustomersChartData" :horizontal="true" />
+      </ChartContainer>
+
+      <!-- Segmentación RFM - 4 gráficas separadas -->
+      <h3 class="section-title">Segmentación RFM de Clientes</h3>
       <div class="images-grid">
         <ChartContainer
-          v-for="image in featuredImages"
-          :key="image"
-          :title="getImageTitle(image)"
+          v-for="image in segmentationImages"
+          :key="image.file"
+          :title="image.title"
         >
-          <img :src="getImageUrl(image)" :alt="image" class="chart-image" />
+          <img :src="getImageUrl(image.file)" :alt="image.title" class="chart-image" />
+        </ChartContainer>
+      </div>
+
+      <!-- Reglas de Asociación - 4 gráficas separadas -->
+      <h3 class="section-title">Reglas de Asociación de Productos</h3>
+      <div class="images-grid">
+        <ChartContainer
+          v-for="image in associationImages"
+          :key="image.file"
+          :title="image.title"
+        >
+          <img :src="getImageUrl(image.file)" :alt="image.title" class="chart-image" />
         </ChartContainer>
       </div>
     </div>
@@ -107,25 +137,104 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import KPICard from '@/components/KPICard.vue'
 import ChartContainer from '@/components/ChartContainer.vue'
+import LineChart from '@/components/LineChart.vue'
+import BarChart from '@/components/BarChart.vue'
 import api from '@/services/api'
 
 const loading = ref(true)
 const error = ref(null)
 const summary = ref({})
-const featuredImages = ref([
-  'grafica_ventas_diarias.png',
-  'grafica_segmentacion_clientes.png',
-  'grafica_top_productos.png',
-  'grafica_reglas_asociacion.png'
+const topCustomers = ref([])
+
+// Imágenes de segmentación RFM
+const segmentationImages = ref([
+  { file: 'grafica_segmentacion_distribucion.png', title: 'Distribución de Segmentos' },
+  { file: 'grafica_segmentacion_barras.png', title: 'Clientes por Segmento' },
+  { file: 'grafica_segmentacion_matriz_rfm.png', title: 'Matriz RFM' },
+  { file: 'grafica_segmentacion_boxplot.png', title: 'Distribución RFM Score' }
 ])
+
+// Imágenes de reglas de asociación
+const associationImages = ref([
+  { file: 'grafica_reglas_asociacion_lift.png', title: 'Top Reglas por Lift' },
+  { file: 'grafica_reglas_asociacion_scatter.png', title: 'Soporte vs Confianza' },
+  { file: 'grafica_reglas_asociacion_dist_lift.png', title: 'Distribución de Lift' },
+  { file: 'grafica_reglas_asociacion_dist_confianza.png', title: 'Distribución de Confianza' }
+])
+
+// Computed property for daily sales chart
+const dailySalesChartData = computed(() => {
+  const chartData = summary.value.chart_data
+  if (!chartData || !chartData.ventas_diarias) return null
+
+  const data = chartData.ventas_diarias
+  const labels = data.map(d => d.fecha)
+  const transactions = data.map(d => d.total_transacciones || 0)
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Transacciones Diarias',
+      data: transactions,
+      borderColor: 'rgb(102, 126, 234)',
+      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  }
+})
+
+// Computed property for top products chart
+const topProductsChartData = computed(() => {
+  const chartData = summary.value.chart_data
+  if (!chartData || !chartData.top_productos) return null
+
+  const data = chartData.top_productos
+  const labels = data.map(d => `Producto ${d.producto_id}`)
+  const frequencies = data.map(d => d.frecuencia || 0)
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Frecuencia de Venta',
+      data: frequencies,
+      backgroundColor: 'rgba(102, 126, 234, 0.7)',
+      borderColor: 'rgb(102, 126, 234)',
+      borderWidth: 1
+    }]
+  }
+})
+
+// Computed property for top customers chart
+const topCustomersChartData = computed(() => {
+  if (!topCustomers.value || topCustomers.value.length === 0) return null
+
+  const labels = topCustomers.value.map(c => `Cliente ${c.persona_id}`)
+  const transactions = topCustomers.value.map(c => c.num_transacciones || 0)
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Número de Transacciones',
+      data: transactions,
+      backgroundColor: 'rgba(255, 99, 132, 0.7)',
+      borderColor: 'rgb(255, 99, 132)',
+      borderWidth: 1
+    }]
+  }
+})
 
 onMounted(async () => {
   try {
-    const response = await api.getSummary()
-    summary.value = response.data
+    const [summaryResponse, topCustomersResponse] = await Promise.all([
+      api.getSummary(),
+      api.getTopCustomers()
+    ])
+    summary.value = summaryResponse.data
+    topCustomers.value = topCustomersResponse.data
   } catch (err) {
     error.value = 'Error cargando el resumen: ' + err.message
   } finally {
@@ -135,16 +244,6 @@ onMounted(async () => {
 
 function getImageUrl(filename) {
   return api.getImageUrl(filename)
-}
-
-function getImageTitle(filename) {
-  const titles = {
-    'grafica_ventas_diarias.png': 'Tendencia de Ventas Diarias',
-    'grafica_segmentacion_clientes.png': 'Segmentación RFM de Clientes',
-    'grafica_top_productos.png': 'Top Productos Más Vendidos',
-    'grafica_reglas_asociacion.png': 'Reglas de Asociación de Productos'
-  }
-  return titles[filename] || filename
 }
 </script>
 
@@ -174,6 +273,7 @@ function getImageTitle(filename) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
   gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .chart-image {
